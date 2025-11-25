@@ -103,7 +103,6 @@ Firebase history view:
 
 Architecture overview:
 
-<img width="744" height="240" alt="image" src="https://github.com/user-attachments/assets/c740a180-5a88-485c-ab78-100ca2e26b5a" />
 
 ---
 
@@ -199,4 +198,3 @@ This confirms:
 ```
 ## file constructure
 
-<img width="332" height="552" alt="image" src="https://github.com/user-attachments/assets/5d62c2c4-9492-4bc9-aec1-bfd76b13d67f" />

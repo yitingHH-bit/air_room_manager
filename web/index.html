@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ESP8266 Temperature and Humidity</title>
+    <style>
+      :root{--bd:#e5e7eb;--tx:#111827;--mut:#6b7280}
+      body{
+        font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;
+        color:var(--tx);
+        max-width:720px;
+        margin:24px auto;
+        padding:0 12px;
+      }
+      .card{
+        border:1px solid var(--bd);
+        border-radius:14px;
+        padding:16px;
+        box-shadow:0 2px 10px rgba(0,0,0,.06);
+      }
+      h1{font-size:20px;margin:0 0 6px}
+      .mut{color:var(--mut);font-size:12px}
+      .row{display:flex;gap:12px;margin-top:8px}
+      .tile{
+        flex:1;
+        border:1px solid var(--bd);
+        border-radius:12px;
+        padding:12px;
+        text-align:center;
+      }
+      .big{font-size:28px;font-weight:700;margin:6px 0}
+      button{
+        padding:8px 12px;
+        border-radius:10px;
+        border:1px solid var(--bd);
+        background:#fafafa;
+        cursor:pointer;
+      }
+      table{
+        width:100%;
+        border-collapse:collapse;
+        margin-top:14px;
+      }
+      th,td{
+        padding:10px;
+        border-bottom:1px solid var(--bd);
+        text-align:left;
+        font-size:14px;
+      }
+      th{font-weight:600}
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- React + ReactDOM UMD -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel 让浏览器直接跑 JSX（开发用，正式环境可以打包） -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 你的 React 应用 -->
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // ESP8266 API 地址
+      const API_BASE = "http://192.168.224.64";
+
+      // Firebase Realtime Database - sensor_readings 节点
+      const FIREBASE_URL =
+        "https://air-manager-ccdf4-default-rtdb.firebaseio.com/sensor_readings.json";
+
+      function App() {
+        const [ip, setIp] = useState("—");
+        const [statusText, setStatusText] = useState("waiting for update…");
+        const [temp, setTemp] = useState(null);
+        const [hum, setHum] = useState(null);
+        const [metrics, setMetrics] = useState(null);
+        const [error, setError] = useState("");
+        const [pushMsg, setPushMsg] = useState("");
+
+        // 历史数据（来自 Firebase）
+        const [history, setHistory] = useState([]);
+        const [histError, setHistError] = useState("");
+        const [histLoading, setHistLoading] = useState(false);
+
+        const formatTemp = (v) =>
+          v == null || Number.isNaN(v) ? "--.- °C" : `${v.toFixed(2)} °C`;
+        const formatHum = (v) =>
+          v == null || Number.isNaN(v) ? "--.- %" : `${v.toFixed(1)} %`;
+
+        const fetchInfo = async () => {
+          try {
+            const res = await fetch(API_BASE + "/api/info", { cache: "no-store" });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const j = await res.json();
+            setIp(j.ip || "—");
+          } catch (e) {
+            setIp(window.location.hostname || "(unavailable)");
+          }
+        };
+
+        const fetchMetrics = async () => {
+          setStatusText("getting…");
+          try {
+            const res = await fetch(API_BASE + "/api/metrics", { cache: "no-store" });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const j = await res.json();
+            setMetrics(j);
+            setTemp(typeof j.temp_c === "number" ? j.temp_c : NaN);
+            setHum(typeof j.rh === "number" ? j.rh : NaN);
+            setError("");
+            setStatusText("last update: " + new Date().toLocaleTimeString());
+          } catch (e) {
+            setError(e.message);
+            setStatusText("read failed: " + e.message);
+          }
+        };
+
+        const pushNow = async () => {
+          try {
+            setPushMsg("Uploading…");
+            const res = await fetch(API_BASE + "/api/push", { method: "POST" });
+            const j = await res.json().catch(() => ({}));
+            if (j.ok) {
+              setPushMsg("Uploaded ✅");
+            } else {
+              setPushMsg("Upload failed ❌");
+            }
+          } catch (e) {
+            setPushMsg("Upload failed: " + e.message);
+          } finally {
+            setTimeout(() => setPushMsg(""), 2000);
+          }
+        };
+
+        // 从 Firebase 获取最近 20 条历史数据
+      // 从 Firebase 获取历史数据（全部取回来，在前端按 ts 排序）
+const fetchHistory = async () => {
+  try {
+    setHistLoading(true);
+    setHistError("");
+
+    // 不再用 orderBy / limitToLast，避免 400 错误
+    const res = await fetch(FIREBASE_URL, { cache: "no-store" });
+
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = (await res.json()) || {};
+
+    // data 是 { key1: {...}, key2: {...} }，转成数组
+    const arr = Object.entries(data).map(([id, v]) => ({
+      id,
+      ...v,
+    }));
+
+    // 在前端按 ts 排序（从早到晚）
+    arr.sort((a, b) => (a.ts || "").localeCompare(b.ts || ""));
+
+    // 如果你只想显示最近 20 条，可以在这里截断：
+    const latest = arr.slice(-20);
+
+    setHistory(latest);
+  } catch (e) {
+    setHistError(e.message);
+  } finally {
+    setHistLoading(false);
+  }
+};
+
+
+        useEffect(() => {
+          fetchInfo();
+          fetchMetrics();
+          fetchHistory(); // 页面加载时拉一次历史
+
+          const id = setInterval(fetchMetrics, 2500);
+          return () => clearInterval(id);
+        }, []);
+
+        const cell = (v) => (v == null ? "—" : v);
+        const fix2 = (v) =>
+          v == null ? "—" : Number(v).toFixed(2);
+        const fix1 = (v) =>
+          v == null ? "—" : Number(v).toFixed(1);
+
+        return (
+          <div className="card">
+            <h1>ESP8266 Temperature and Humidity Panel</h1>
+            <div className="mut">IP: {ip}</div>
+
+            {/* 实时卡片 */}
+            <div className="row">
+              <div className="tile">
+                <div>Temperature</div>
+                <div className="big">{formatTemp(temp)}</div>
+              </div>
+              <div className="tile">
+                <div>Humidity</div>
+                <div className="big">{formatHum(hum)}</div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div className="mut" id="status">
+                {statusText}
+              </div>
+              <button onClick={fetchMetrics}>refresh now</button>
+            </div>
+
+            <div
+              style={{
+                marginTop: 16,
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div className="mut" style={{ fontSize: 12 }}>
+                Auto-refresh every 2.5s
+              </div>
+              <div>
+                <button onClick={fetchMetrics}>Refresh now</button>
+                <button
+                  onClick={pushNow}
+                  style={{ marginLeft: 8 }}
+                >
+                  Upload to Cloud Now
+                </button>
+              </div>
+            </div>
+
+            {pushMsg && (
+              <div className="mut" style={{ marginTop: 6 }}>
+                {pushMsg}
+              </div>
+            )}
+
+            {error && (
+              <div style={{ color: "#b91c1c", marginTop: 6 }}>
+                Error: {error}
+              </div>
+            )}
+
+            {/* 最新一条数据详情 */}
+            <h3 style={{ marginTop: 20, marginBottom: 4 }}>Latest reading</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>device_id</th>
+                  <th>ts (UTC)</th>
+                  <th>temp_c</th>
+                  <th>rh (%)</th>
+                  <th>aqi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{cell(metrics?.device_id)}</td>
+                  <td>{cell(metrics?.ts)}</td>
+                  <td>{fix2(metrics?.temp_c)}</td>
+                  <td>{fix1(metrics?.rh)}</td>
+                  <td>{cell(metrics?.aqi)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* 历史数据表格 */}
+            <h3 style={{ marginTop: 24, marginBottom: 4 }}>
+              History (from Firebase, last 20)
+            </h3>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 6,
+              }}
+            >
+              <div className="mut">
+                {histLoading
+                  ? "Loading history…"
+                  : `Total rows: ${history.length}`}
+              </div>
+              <button onClick={fetchHistory}>Reload history</button>
+            </div>
+            {histError && (
+              <div style={{ color: "#b91c1c", marginBottom: 6 }}>
+                History error: {histError}
+              </div>
+            )}
+
+            <div style={{ maxHeight: 260, overflowY: "auto" }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>ts (UTC)</th>
+                    <th>temp_c</th>
+                    <th>rh (%)</th>
+                    <th>device_id</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((row, i) => (
+                    <tr key={row.id || i}>
+                      <td>{i + 1}</td>
+                      <td>{cell(row.ts)}</td>
+                      <td>{fix2(row.temp_c)}</td>
+                      <td>{fix1(row.rh)}</td>
+                      <td>{cell(row.device_id)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>

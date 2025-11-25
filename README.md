@@ -1,7 +1,7 @@
 
 Developer:
-
-<img width="318" height="120" alt="image" src="https://github.com/user-attachments/assets/fe8e35a9-b1de-49e7-822c-c7796f29de6e" />
+ jiancai hou  Danila Morozov 
+ for project2 
 
 ````markdown
 # Room Air Temperature & Humidity Monitor

@@ -1,9 +1,14 @@
 
 Developer:
- jiancai hou  Danila Morozov 
+ jiancai hou  Danila Morozov  （some insigt from Chatgpt）
  for project2 
+ 
+<img width="1223" height="815" alt="image" src="https://github.com/user-attachments/assets/df71cff5-2b01-4012-9a18-f115a728f206" />
 
-````markdown
+protocal
+<img width="777" height="367" alt="image" src="https://github.com/user-attachments/assets/914b94cd-1411-4872-a4d9-b45bcef62a2b" />
+
+```` 
 # Room Air Temperature & Humidity Monitor
 
 An end-to-end demo project for monitoring room temperature and humidity using:
@@ -58,16 +63,12 @@ It:
 * Reads measurement history from **Firebase** and displays it in a table
 
 ### UI (to be further optimized)
-
-<img width="803" height="407" alt="image" src="https://github.com/user-attachments/assets/040424f0-b80a-474d-b62a-526cc7766c74" />
-
+<img width="1223" height="815" alt="image" src="https://github.com/user-attachments/assets/af5cc7c4-866a-4a37-8e70-d8679502e110" />
 The React app is embedded in a plain HTML file (no build pipeline) and also exposes an interface slot for future cloud / database features:
 
-<img width="1100" height="185" alt="image" src="https://github.com/user-attachments/assets/657ed534-bf89-4b58-84e2-4da94a26a9e5" />
 
 Firebase history view:
 
-<img width="915" height="963" alt="image" src="https://github.com/user-attachments/assets/368eece8-39c4-47c4-a8a9-3ed6d08244e4" />
 
 ---
 
@@ -132,6 +133,7 @@ http://localhost:8080
 ---
 
 ## Firebase Realtime Database
+<img width="762" height="387" alt="image" src="https://github.com/user-attachments/assets/0cf57432-3b29-4c09-aafb-8812ea5143be" />
 
 * Database URL example:
 
@@ -195,6 +197,5 @@ This confirms:
 ```
 
 ::contentReference[oaicite:0]{index=0}
-```
-## file constructure
+` 
 

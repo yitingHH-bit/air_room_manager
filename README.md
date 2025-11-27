@@ -12,6 +12,8 @@ protocal
 # Room Air Temperature & Humidity Monitor
 
 An end-to-end demo project for monitoring room temperature and humidity using:
+<img width="1500" height="2000" alt="image" src="https://github.com/user-attachments/assets/ee5eaebb-d237-4fad-a6be-3c1bef16aecc" />
+<img width="1500" height="2000" alt="image" src="https://github.com/user-attachments/assets/fb4fb6af-3674-444d-8903-d4136c78a213" />
 
 - **ESP8266** + DHT sensor (temperature & humidity)
 - **PlatformIO (VS Code)** for firmware development

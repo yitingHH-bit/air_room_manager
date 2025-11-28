@@ -1,43 +1,39 @@
 
-Developer:
- jiancai hou  Danila Morozov  （some insigt from Chatgpt）
- for project2 
- 
-<img width="1223" height="815" alt="image" src="https://github.com/user-attachments/assets/df71cff5-2b01-4012-9a18-f115a728f206" />
+---
 
-protocal
-<img width="777" height="367" alt="image" src="https://github.com/user-attachments/assets/914b94cd-1411-4872-a4d9-b45bcef62a2b" />
+#  Room Air Temperature & Humidity Monitor
 
-hardware:
-<img width="1500" height="2000" alt="image" src="https://github.com/user-attachments/assets/ee5eaebb-d237-4fad-a6be-3c1bef16aecc" />
-<img width="1500" height="2000" alt="image" src="https://github.com/user-attachments/assets/fb4fb6af-3674-444d-8903-d4136c78a213" />
-```` 
-# Room Air Temperature & Humidity Monitor
-
-An end-to-end demo project for monitoring room temperature and humidity using:
-
-
-- **ESP8266** + DHT sensor (temperature & humidity)
-- **PlatformIO (VS Code)** for firmware development
-- **React.js + Docker** for the web dashboard
-- **Firebase Realtime Database** for cloud storage & history
-
+**Developers:** Jiancai Hou, Danila Morozov *(with insights from ChatGPT)*
+**Project:** Project 2
 
 ---
 
-## Data Protocol (Device → Cloud / Frontend)
+##  Overview
 
-Each measurement is sent as a JSON object with the following fields:
+An end-to-end demo project for monitoring **room temperature** and **humidity**, featuring:
 
-| Field      | Type    | Description                                                                 |
-|-----------|---------|-----------------------------------------------------------------------------|
-| `device_id` | string  | Unique device ID, e.g. `"esp8266-001"`                                     |
-| `ts`        | string  | Timestamp in **UTC**, ISO-8601 format, e.g. `"2025-09-30T07:22:15Z"`       |
-| `temp_c`    | number  | Temperature in °C                                                          |
-| `rh`        | number  | Relative humidity in percent (0–100)                                       |
-| `aqi`       | number/null | Air Quality Index (optional placeholder; use `null` if not available) |
+* **ESP8266** + DHT sensor (temperature & humidity)
+* **PlatformIO (VS Code)** for firmware development
+* **React.js + Docker** for the web dashboard
+* **Firebase Realtime Database** for cloud storage & history
 
-Example payload:
+<img width="1223" height="815" alt="Dashboard Screenshot" src="https://github.com/user-attachments/assets/df71cff5-2b01-4012-9a18-f115a728f206" />
+
+---
+
+## 📡 Data Protocol (Device → Cloud / Frontend)
+
+Each measurement is sent as a JSON object:
+
+| Field       | Type        | Description                                                           |
+| ----------- | ----------- | --------------------------------------------------------------------- |
+| `device_id` | string      | Unique device ID, e.g., `"esp8266-001"`                               |
+| `ts`        | string      | Timestamp in **UTC**, ISO-8601 format, e.g., `"2025-09-30T07:22:15Z"` |
+| `temp_c`    | number      | Temperature in °C                                                     |
+| `rh`        | number      | Relative humidity in % (0–100)                                        |
+| `aqi`       | number/null | Air Quality Index (optional; `null` if not available)                 |
+
+**Example payload:**
 
 ```json
 {
@@ -47,159 +43,124 @@ Example payload:
   "rh": 38.0,
   "aqi": null
 }
-````
+```
+
+**Protocol Diagram:** <img width="777" height="367" alt="Data Protocol" src="https://github.com/user-attachments/assets/914b94cd-1411-4872-a4d9-b45bcef62a2b" />
 
 ---
 
-## Web Interface
+##  Hardware
 
-The ESP8266 exposes a simple REST API:
+* **ESP8266** module
+* **DHT11/DHT22** temperature & humidity sensor
 
-* `GET /api/metrics` – current reading (same JSON as above)
-* `POST /api/push` – triggers an immediate cloud upload (to Firebase)
-* `GET /api/info` – shows device IP, SSID and ID
+**Wiring & Setup:**
 
-The **frontend** is a single-page React app running in a Docker container.
-It:
+<img width="1500" height="2000" alt="Hardware Diagram 1" src="https://github.com/user-attachments/assets/ee5eaebb-d237-4fad-a6be-3c1bef16aecc" />
+<img width="1500" height="2000" alt="Hardware Diagram 2" src="https://github.com/user-attachments/assets/fb4fb6af-3674-444d-8903-d4136c78a213" />
 
-* Polls `/api/metrics` for **live temperature & humidity**
+---
+
+##  Web Interface
+
+The **ESP8266** exposes a simple REST API:
+
+| Endpoint       | Method | Description                    |
+| -------------- | ------ | ------------------------------ |
+| `/api/metrics` | GET    | Current reading (JSON)         |
+| `/api/push`    | POST   | Trigger immediate cloud upload |
+| `/api/info`    | GET    | Device IP, SSID, and ID        |
+
+**React Dashboard:**
+
+* Polls `/api/metrics` for **live readings**
 * Calls `/api/push` for manual upload
-* Reads measurement history from **Firebase** and displays it in a table
+* Reads measurement **history from Firebase**
 
-### UI (to be further optimized)
-<img width="1223" height="815" alt="image" src="https://github.com/user-attachments/assets/af5cc7c4-866a-4a37-8e70-d8679502e110" />
-The React app is embedded in a plain HTML file (no build pipeline) and also exposes an interface slot for future cloud / database features:
-
-
-Firebase history view:
-
+<img width="1223" height="815" alt="React Dashboard" src="https://github.com/user-attachments/assets/af5cc7c4-866a-4a37-8e70-d8679502e110" />
 
 ---
 
-## Project Structure
+##  Project Structure
 
-**Hardware**
+### Hardware
 
 * ESP8266 module
-* DHT11 (or DHT22) temperature & humidity sensor
+* DHT11/DHT22 sensor
 
-**Firmware (VS Code + PlatformIO)**
+### Firmware (VS Code + PlatformIO)
 
-* Handles Wi-Fi, HTTP server, DHT readings, NTP time sync
-* Periodically uploads JSON data to Firebase
-* Provides REST API for the React dashboard
+* Wi-Fi and HTTP server
+* DHT sensor readings
+* NTP time sync
+* Periodic upload to Firebase
+* REST API for React dashboard
 
-**Frontend**
+### Frontend
 
-* Pure **React.js** (UMD) in `index.html`
-* Uses `fetch()` to talk to ESP8266 and Firebase
-* Packaged and served using **Docker + http-server**
+* **React.js** embedded in `index.html`
+* Uses `fetch()` to communicate with ESP8266 and Firebase
+* Served via **Docker + http-server**
 
-**Cloud / Storage**
+### Cloud / Storage
 
-* **Firebase Realtime Database**
-  Path used in this project:
+**Firebase Realtime Database** path:
 
-  ```text
-  /sensor_readings
-      ├─ -NxAbc123... { device_id, ts, temp_c, rh, aqi }
-      └─ ...
-  ```
+```text
+/sensor_readings
+    ├─ -NxAbc123... { device_id, ts, temp_c, rh, aqi }
+```
 
-Architecture overview:
-
+<img width="762" height="387" alt="Firebase DB" src="https://github.com/user-attachments/assets/0cf57432-3b29-4c09-aafb-8812ea5143be" />
 
 ---
 
-## Docker (Frontend)
+##  Docker (Frontend)
 
-Build the Docker image:
+**Build Docker image:**
 
 ```bash
 docker build -t username/esp8266-panel-react .
 ```
 
-Run the container:
+**Run container:**
 
 ```bash
 docker run --rm -p 8080:8080 username/esp8266-panel-react
 ```
 
-Open the dashboard in your browser:
+**Open dashboard:**
+`http://localhost:8080`
 
-```text
-http://localhost:8080
-```
-
-> ⚠️ Make sure the `API_BASE` in `web/index.html` points to your ESP8266 IP
-> (for example `http://192.168.0.105`).
+>  Make sure `API_BASE` in `web/index.html` points to your ESP8266 IP, e.g., `http://192.168.0.105`.
 
 ---
 
-## Firebase Realtime Database
-<img width="762" height="387" alt="image" src="https://github.com/user-attachments/assets/0cf57432-3b29-4c09-aafb-8812ea5143be" />
-
-* Database URL example:
-
-  ```text
-  https://air-manager-xxxx-default-rtdb.firebaseio.com/
-  ```
-
-* Data is written under:
-
-  ```text
-  /sensor_readings
-  ```
-
-* For testing you can use a permissive rule (do **not** use in production):
-
-  ```json
-  {
-    "rules": {
-      ".read": true,
-      ".write": true
-    }
-  }
-  ```
-
-The React UI loads recent history from Firebase and displays it nicely (latest 20 records, sorted by timestamp).
-
----
-
-## Serial Log (PlatformIO Monitor)
-
-Example output from VS Code / PlatformIO:
+##  Serial Log (PlatformIO Monitor)
 
 ```text
---- Terminal on COM3 | 115200 8-N-1
---- Available filters and text transformations: colorize, debug, default, direct, esp8266_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
---- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
-...
 Connected! IP: 192.168.0.105
-SoftAP up: SSID=esp8266-setup  PASS=12345678  URL: http://192.168.4.1/
+SoftAP up: SSID=esp8266-setup  PASS=12345678
 HTTP server started
 NTP syncing...
-mDNS: http://esp8266.local/
 [DHT] T=25.80 °C  H=39.0 %
 ```
 
-This confirms:
+Confirms:
 
-* Station mode IP (`192.168.0.105`) used by the React frontend
-* Fallback AP (`esp8266-setup` at `192.168.4.1`)
-* HTTP server & NTP sync are working
+* Station mode IP used by React frontend
+* Fallback AP for setup
+* HTTP server & NTP working
 
 ---
 
-## To-Do / Possible Improvements
+##  To-Do / Improvements
 
-* Improve dashboard layout & responsive design
-* Add charts for temperature / humidity trends
-* Secure Firebase with proper auth & indexed queries
-* Support multiple devices (`device_id` filter, per-room view)
+* Responsive dashboard design
+* Charting temperature & humidity trends
+* Secure Firebase with authentication & rules
+* Support multiple devices / per-room views
 
-```
 
-::contentReference[oaicite:0]{index=0}
-` 
 
+Do you want me to do that next?

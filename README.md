@@ -162,5 +162,3 @@ Confirms:
 * Support multiple devices / per-room views
 
 
-
-Do you want me to do that next?
